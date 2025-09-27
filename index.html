@@ -1,0 +1,314 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Luxe Bites; The Magical Bakery</title>
+<meta name="description" content="Baking World — offline-friendly, front-end-only bakery site with real images, recipes, favorites, and a fake cart (no backend).">
+<style>
+  :root{
+    --bg:#0f1724; --panel:#0b1220; --accent:#ffb86b; --muted:#94a3b8;
+    --glass: rgba(255,255,255,0.05);
+    --glass-2: rgba(255,255,255,0.03);
+    --glass-border: rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(255,200,150,0.03), transparent),
+                linear-gradient(180deg,#071024 0%, #071426 40%, #081822 100%);
+    color:#e6eef8; -webkit-font-smoothing:antialiased;
+    min-height:100vh; overflow-x:hidden;
+  }header.hero{height:56vh; min-height:320px; display:flex; align-items:center; justify-content:space-between; padding:36px 8vw; gap:16px} .hero-left{max-width:760px} h1{font-size:clamp(28px,5vw,48px); margin:0 0 8px 0; letter-spacing:-0.02em} p.lead{color:var(--muted); margin:0 0 18px; font-size:1.02rem} .cta-row{display:flex; gap:12px; align-items:center} .btn{background:linear-gradient(180deg,var(--accent), #ff914d); color:#0b1220; border:none; padding:12px 18px; border-radius:12px; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(255,150,80,0.12)} .ghost{background:transparent; border:1px solid var(--glass-border); color:var(--muted); padding:10px 14px; border-radius:10px}
+
+.hero-right{width:420px; height:260px; position:relative; perspective:900px} .hero-image{width:100%; height:100%; border-radius:16px; overflow:hidden; border:1px solid var(--glass-border); box-shadow:0 18px 50px rgba(2,6,23,0.6)} .hero-image img{width:100%; height:100%; object-fit:cover; display:block}
+
+main{padding:28px; display:grid; grid-template-columns: 1fr 360px; gap:22px; max-width:1200px; margin: -70px auto 60px} .panel{background:linear-gradient(180deg,var(--glass), var(--glass-2)); border-radius:16px; padding:18px; border:1px solid var(--glass-border); backdrop-filter: blur(6px); box-shadow: 0 8px 30px rgba(3,8,18,0.6)}
+
+.recipes{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px} .card{border-radius:12px; overflow:hidden; background:#071426; cursor:pointer; transition:transform .18s ease, box-shadow .18s; border:1px solid rgba(255,255,255,0.02)} .card:hover{transform:translateY(-6px); box-shadow:0 22px 60px rgba(2,6,23,0.5)} .thumb{height:160px; background:#111; display:block} .thumb img{width:100%; height:100%; object-fit:cover; display:block} .card-body{padding:12px} .card-title{display:flex; gap:8px; align-items:center} .card-title h3{margin:0; font-size:1.05rem} .small{font-size:0.86rem; color:var(--muted)}
+
+aside .section{margin-bottom:18px} .timer{display:flex; gap:10px; align-items:center; justify-content:space-between} .timer-display{font-size:1.6rem; font-weight:700; letter-spacing:0.02em} .controls{display:flex; gap:8px} .chip{background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:10px; border:1px solid var(--glass-border); cursor:pointer}
+
+.ingredients{display:flex; flex-wrap:wrap; gap:8px} .ing{padding:8px 10px; border-radius:999px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.03); cursor:grab}
+
+.modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60} .modal.open{display:flex} .sheet{width:min(920px,96%); max-height:88vh; overflow:auto; background:#071426; border-radius:14px; padding:18px; border:1px solid var(--glass-border)} .steps{margin-top:12px} .step{padding:12px; border-radius:10px; background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent); margin-bottom:8px}
+
+footer{max-width:1200px; margin:0 auto 40px; padding:12px 28px; color:var(--muted); display:flex; justify-content:space-between}
+
+@media (max-width:900px){ main{grid-template-columns:1fr; margin-top:-20px} .hero{flex-direction:column; gap:16px} .hero-right{width:100%; height:220px} } </style>
+
+</head>
+<body><header class="hero">
+  <div class="hero-left">
+    <h1>Luxe Bites— <span style="color:var(--accent)">The Magical Bakery</span></h1>
+    <p class="lead">Real bakery photos, recipes, and a fun offline experience. No backend — everything runs in your browser.</p>
+    <div class="cta-row">
+      <button class="btn" id="openGallery">Explore Pastries</button>
+      <button class="ghost" id="surpriseBtn">Surprise me</button>
+      <div style="width:8px"></div>
+      <div class="small">Saved: <span id="savedCount">0</span></div>
+    </div>
+  </div>  <div class="hero-right">
+    <div class="hero-image" id="heroImage">
+      <!-- Real bakery hero image (Unsplash) -->
+      <img alt="Assortment of pastries on a wooden table" src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80" loading="lazy">
+    </div>
+  </div>
+</header><main>
+  <section class="panel">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+      <h2 style="margin:0">Featured Pastries</h2>
+      <div class="small">Click a card to view recipe • Drag ingredients to the oven (right)</div>
+    </div><div class="recipes" id="recipesGrid">
+  <!-- injected by JS -->
+</div>
+
+  </section>  <aside class="panel">
+    <div class="section">
+      <h3 style="margin:0 0 8px">Oven</h3>
+      <div class="timer">
+        <div>
+          <div class="timer-display" id="timerDisplay">00:00</div>
+          <div class="small">Drag ingredients to "add" them to the oven.</div>
+        </div>
+        <div class="controls">
+          <div class="chip" id="startTimer">Start</div>
+          <div class="chip" id="pauseTimer">Pause</div>
+          <div class="chip" id="resetTimer">Reset</div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="small">Quick preheat</div>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <div class="chip" data-min="5">5m</div>
+          <div class="chip" data-min="15">15m</div>
+          <div class="chip" data-min="30">30m</div>
+        </div>
+      </div>
+    </div><div class="section">
+  <h3 style="margin-bottom:8px">Ingredients</h3>
+  <div class="ingredients" id="ingredientsArea"></div>
+  <div class="small" style="margin-top:10px">Drag any ingredient into the oven area to "add" it.</div>
+</div>
+
+<div class="section">
+  <h3 style="margin-bottom:8px">Favorites & Cart</h3>
+  <div id="favList" class="small">No favorites yet — click the heart on a card.</div>
+  <div style="margin-top:12px">
+    <div class="small">Fake Cart (local only)</div>
+    <div id="cartList" class="small">Cart is empty</div>
+    <div style="margin-top:8px; display:flex; gap:8px">
+      <button class="btn" id="clearCart">Clear Cart</button>
+      <button class="ghost" id="downloadMenu">Download Menu</button>
+    </div>
+  </div>
+</div>
+
+  </aside>
+</main><div class="modal" id="modal">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <h2 id="modalTitle" style="margin:0">Recipe</h2>
+      <div style="flex:1"></div>
+      <button class="btn" id="addToCart">Add to Cart</button>
+      <button class="ghost" id="closeModal">Close</button>
+    </div>
+    <p id="modalDesc" class="small" style="margin-top:8px"></p>
+    <div style="margin-top:12px">
+      <h3 style="margin:0 0 8px">Ingredients</h3>
+      <div id="modalIngredients" class="ingredients"></div>
+    </div>
+    <div class="steps" id="modalSteps">
+      <h3 style="margin-top:10px">Steps</h3>
+    </div>
+  </div>
+</div><footer>
+  <div class="small">
+      &copy; 2025 Nicol Project.  Built With ♥️ by <a href="https://flexi-spec.github.io/Portfolio-/" target="_blank">Flexi Dev Studio</a></div>
+  <div class="small">Contact: 07071341687</div>
+</footer><canvas id="confetti" style="position:fixed; inset:0; pointer-events:none; z-index:120"></canvas>
+
+<script>
+// Real-image Baking World — client-side only
+const RECIPES = [
+  {
+    id:'choc_chip', title:'Cosmic Choco Chip Cookies', desc:'Crisp edges, gooey centers — legendary.',
+    image:'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80',
+    ingredients:['flour','butter','sugar','eggs','chocolate'],
+    steps:[
+      'Preheat oven to 180°C (350°F).',
+      'Cream butter and sugar. Add eggs one at a time.',
+      'Fold in flour and chocolate chips.',
+      'Scoop onto tray and bake 10–12 minutes.'
+    ]
+  },
+  {
+    id:'lemon_tart', title:'Glow Lemon Tart', desc:'Tart, bright, buttery crust.',
+    image:'https://images.unsplash.com/photo-1542827638-8d8314c9f6b5?auto=format&fit=crop&w=1200&q=80',
+    ingredients:['flour','butter','sugar','eggs','lemon'],
+    steps:[
+      'Make a shortcrust and chill 30 min.',
+      'Whisk lemon, eggs and sugar; pour into crust.',
+      'Bake 25–30 minutes at 170°C.'
+    ]
+  },
+  {
+    id:'focaccia', title:'Cloud Focaccia', desc:'Olive oil, rosemary pockets of joy.',
+    image:'https://images.unsplash.com/photo-1509475826633-fed577a2c71b?auto=format&fit=crop&w=1200&q=80',
+    ingredients:['flour','yeast','water','salt','olive oil','rosemary'],
+    steps:[
+      'Mix dough and let rise 1hr.',
+      'Dimple, add oil & rosemary.',
+      'Bake 20–25 minutes at 220°C.'
+    ]
+  },
+  {
+    id:'pancake', title:'Midnight Fluff Pancakes', desc:'Light, tall, stackable.',
+    image:'https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=1200&q=80',
+    ingredients:['flour','milk','eggs','sugar','butter','baking powder'],
+    steps:[
+      'Mix dry and wet ingredients separately then combine.',
+      'Cook on medium heat until bubbles form, flip, cook 1–2 min.'
+    ]
+  }
+];
+
+const ING_POOL = Array.from(new Set(RECIPES.flatMap(r=>r.ingredients))).sort();
+const qs = s => document.querySelector(s);
+const qsa = s => Array.from(document.querySelectorAll(s));
+
+function renderRecipes(){
+  const grid = qs('#recipesGrid'); grid.innerHTML = '';
+  for(const r of RECIPES){
+    const el = document.createElement('article'); el.className='card'; el.dataset.id=r.id;
+    el.innerHTML = `
+      <div class="thumb"><img alt="${r.title}" src="${r.image}" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title"><h3>${r.title}</h3><div style="flex:1"></div><button class="ghost favBtn" title="Save favorite">♡</button></div>
+        <p class="small">${r.desc} · ${r.ingredients.length} ingredients</p>
+      </div>
+    `;
+    grid.appendChild(el);
+  }
+}
+
+function renderIngredients(){
+  const area = qs('#ingredientsArea'); area.innerHTML='';
+  for(const i of ING_POOL){
+    const d = document.createElement('div'); d.className='ing'; d.draggable=true; d.textContent=i;
+    d.addEventListener('dragstart', (e)=> e.dataTransfer.setData('text/plain', i));
+    area.appendChild(d);
+  }
+}
+
+let currentRecipe = null;
+function openModal(recipeId){
+  currentRecipe = RECIPES.find(r=>r.id===recipeId);
+  if(!currentRecipe) return;
+  qs('#modalTitle').textContent = currentRecipe.title;
+  qs('#modalDesc').textContent = currentRecipe.desc;
+  const ingArea = qs('#modalIngredients'); ingArea.innerHTML='';
+  currentRecipe.ingredients.forEach(i=>{
+    const el = document.createElement('div'); el.className='ing'; el.textContent=i;
+    el.draggable=true; el.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', i));
+    ingArea.appendChild(el);
+  });
+  const steps = qs('#modalSteps'); steps.innerHTML = '<h3 style="margin-top:10px">Steps</h3>';
+  currentRecipe.steps.forEach((s,idx)=>{
+    const st = document.createElement('div'); st.className='step'; st.innerHTML = `<strong>Step ${idx+1}:</strong> ${s}`;
+    steps.appendChild(st);
+  });
+  qs('#modal').classList.add('open');
+}
+
+function getFavs(){ try { return JSON.parse(localStorage.getItem('baking_favs')||'[]') } catch(e){return []}}
+function saveFavs(arr){ localStorage.setItem('baking_favs', JSON.stringify(arr)); updateFavUI() }
+function toggleFav(id){ const favs = getFavs(); const idx = favs.indexOf(id); if(idx===-1) favs.push(id); else favs.splice(idx,1); saveFavs(favs); }
+function updateFavUI(){ const favs = getFavs(); qs('#savedCount').textContent = favs.length; const list = qs('#favList'); if(favs.length===0) list.textContent='No favorites yet — click the heart on a card.'; else { list.innerHTML = favs.map(id=>{ const r = RECIPES.find(x=>x.id===id); return `<div style="margin-bottom:6px">${r.title}</div>` }).join(''); } }
+
+// Cart (fake, localStorage)
+function getCart(){ try{return JSON.parse(localStorage.getItem('baking_cart')||'[]')}catch(e){return []} }
+function saveCart(c){ localStorage.setItem('baking_cart', JSON.stringify(c)); updateCartUI() }
+function addToCart(id){ const c = getCart(); c.push(id); saveCart(c); }
+function clearCart(){ localStorage.removeItem('baking_cart'); updateCartUI(); }
+function updateCartUI(){ const c = getCart(); const el = qs('#cartList'); if(c.length===0) el.textContent='Cart is empty'; else { el.innerHTML = c.map((id,idx)=>{ const r = RECIPES.find(x=>x.id===id); return `<div style="margin-bottom:6px">${idx+1}. ${r.title}</div>`}).join(''); } }
+
+// Click handlers
+document.addEventListener('click', e=>{
+  if(e.target.closest('.card')){
+    const id = e.target.closest('.card').dataset.id; openModal(id);
+  }
+  if(e.target.classList.contains('favBtn')){
+    e.stopPropagation(); const id = e.target.closest('.card').dataset.id; toggleFav(id); e.target.textContent = getFavs().includes(id) ? '♥' : '♡';
+  }
+});
+qs('#closeModal').addEventListener('click', ()=> qs('#modal').classList.remove('open'));
+qs('#openGallery').addEventListener('click', ()=> qs('#modal').classList.add('open'));
+qs('#surpriseBtn').addEventListener('click', ()=> {
+  const r = RECIPES[Math.floor(Math.random()*RECIPES.length)]; openModal(r.id);
+});
+qs('#addToCart').addEventListener('click', ()=>{
+  if(!currentRecipe) return; addToCart(currentRecipe.id); qs('#modal').classList.remove('open'); fireConfetti(80);
+});
+qs('#clearCart').addEventListener('click', ()=> clearCart());
+qs('#downloadMenu').addEventListener('click', ()=> downloadMenu());
+
+// Oven drag/drop
+const confettiCanvas = qs('#confetti'); const ctx = confettiCanvas.getContext('2d');
+function resizeCanvas(){ confettiCanvas.width = innerWidth; confettiCanvas.height = innerHeight }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+const ovenArea = document.createElement('div');
+ovenArea.style.cssText = 'position:fixed; right:20px; bottom:120px; width:260px; height:180px; border-radius:12px; background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent); border:1px dashed rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; color:var(--muted); z-index:50; padding:12px';
+ovenArea.textContent = 'Drag ingredients here →'; document.body.appendChild(ovenArea);
+
+ovenArea.addEventListener('dragover', e=> e.preventDefault());
+ovenArea.addEventListener('drop', e=>{
+  e.preventDefault(); const item = e.dataTransfer.getData('text/plain'); if(!item) return;
+  ovenArea.animate([{transform:'scale(1)'},{transform:'scale(0.98)'},{transform:'scale(1)'}],{duration:240});
+  const toast = document.createElement('div'); toast.textContent = `Added: ${item}`; toast.style.cssText='position:absolute;right:20px;bottom:310px;background:#0b1220;border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:8px'; document.body.appendChild(toast);
+  setTimeout(()=> toast.remove(),1600);
+  if(['chocolate','lemon','yeast'].includes(item)) fireConfetti(40);
+});
+
+// Timer
+let timerSeconds = 0, timerInt = null, timerRunning=false;
+const timerDisplay = qs('#timerDisplay');
+function formatTime(s){ const m = Math.floor(s/60); const ss = s%60; return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}` }
+function startTimer(seconds){ timerSeconds = seconds ?? timerSeconds; if(timerInt) clearInterval(timerInt); timerRunning = true; timerInt = setInterval(()=>{ if(timerSeconds<=0){ clearInterval(timerInt); timerRunning=false; timerFinished(); return } timerSeconds--; timerDisplay.textContent = formatTime(timerSeconds); },1000); }
+function pauseTimer(){ if(timerInt) clearInterval(timerInt); timerRunning=false; }
+function resetTimer(){ if(timerInt) clearInterval(timerInt); timerSeconds=0; timerDisplay.textContent='00:00'; timerRunning=false; }
+function timerFinished(){ timerDisplay.textContent='00:00'; try{ new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQA=') .play(); }catch(e){} fireConfetti(200); }
+qs('#startTimer').addEventListener('click', ()=> { if(!timerSeconds) startTimer(900); else if(!timerRunning) startTimer(timerSeconds); });
+qs('#pauseTimer').addEventListener('click', ()=> pauseTimer());
+qs('#resetTimer').addEventListener('click', ()=> resetTimer());
+qsa('.chip[data-min]').forEach(c=> c.addEventListener('click', ()=> startTimer(parseInt(c.dataset.min)*60)));
+
+// Confetti
+function fireConfetti(amount=120){
+  const pieces = [];
+  for(let i=0;i<amount;i++){
+    pieces.push({ x: Math.random()*confettiCanvas.width, y: -10 - Math.random()*200, vx: (Math.random()-0.5)*6, vy: 2 + Math.random()*5, size: 6 + Math.random()*8, rot: Math.random()*360, color: `hsl(${Math.random()*40+20}, 80%, ${60 - Math.random()*20}%)` });
+  }
+  function step(){ ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height); for(const p of pieces){ p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.rot += p.vx*2; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle = p.color; ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6); ctx.restore(); }
+    if(pieces.every(p=> p.y > confettiCanvas.height + 40)) return; requestAnimationFrame(step);
+  }
+  step();
+}
+
+// small parallax on hero image
+const heroImg = qs('#heroImage'); document.addEventListener('mousemove', e=>{ const x = (e.clientX - innerWidth/2)/innerWidth*10; const y = (e.clientY - innerHeight/2)/innerHeight*6; heroImg.style.transform = `translate(${x}px, ${y}px)`; });
+
+// download menu as simple JSON
+function downloadMenu(){ const data = {recipes: RECIPES.map(r=>({title:r.title, desc:r.desc, ingredients:r.ingredients, steps:r.steps}))}; const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'baking-world-menu.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+// init
+function init(){ renderRecipes(); renderIngredients(); updateFavUI(); updateCartUI(); qsa('.card').forEach(card=>{ const id = card.dataset.id; const btn = card.querySelector('.favBtn'); btn.textContent = getFavs().includes(id)?'♥️':'♡'; }); }
+init();
+
+// keyboard
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') qs('#modal').classList.remove('open') });
+
+</script></body>
+</html>
